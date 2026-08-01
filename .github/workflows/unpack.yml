@@ -1,0 +1,33 @@
+name: Unpack website
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    if: "!contains(github.event.head_commit.message, '[skip unpack]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unpack website
+        run: |
+          cat payload/part*.txt | base64 --decode > site.zip
+          rm -rf unpacked
+          unzip -q site.zip -d unpacked
+          cp -a unpacked/nad-zainal-brand-site-lite3/. .
+          rm -rf payload unpacked site.zip .github/workflows/unpack.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+      - name: Commit website
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Add Nad Zainal brand website [skip unpack]"
+          git push
